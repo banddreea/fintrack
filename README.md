@@ -4,13 +4,13 @@ I built a personal finance tracker with Spring Boot. This is my first Java proje
 
 ---
 
-Check out the live demo here → [Live Demo]()
+Check out the live demo here → [Live Demo](https://banddreea-fintrack.up.railway.app/)
 
 ## Preview
 
 <img src="assets/mobile-preview.png" alt="FinTrack screenshot"/>
 
-<img src="assets/dashboard.png" alt="FinTrack screenshot"/>
+<img src="assets/dashboard.png" style="border: 1px solid black" alt="FinTrack screenshot"/>
 
 ---
 
