@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="en" xmlns:th="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Summary details — FinTrack</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}" />
+  </head>
+  <body class="app-body">
+    <div class="shell">
+      <nav class="topnav">
+        <div class="nav-brand">
+          <img th:src="@{/images/logo.png}" alt="FinTrack" class="nav-logo" />
+          <span class="nav-brand-name">FinTrack</span>
+        </div>
+
+        <div class="nav-links">
+          <a th:href="@{/dashboard}" class="nav-link">Dashboard</a>
+          <a th:href="@{/transactions}" class="nav-link">Transactions</a>
+          <a th:href="@{/summary}" class="nav-link active">Summary</a>
+        </div>
+
+        <div class="nav-user">
+          <div
+            class="nav-avatar"
+            th:text="${#authentication.name.substring(0,1).toUpperCase()}"
+          >
+            U
+          </div>
+          <span class="nav-username" th:text="${#authentication.name}"
+            >username</span
+          >
+          <form method="post" th:action="@{/logout}">
+            <button type="submit" class="nav-logout">Sign out</button>
+          </form>
+        </div>
+      </nav>
+
+      <div class="content">
+        <div style="margin-bottom: 16px">
+          <a th:href="@{/summary}" class="link-small">← Back to summary</a>
+        </div>
+
+        <div class="page-title" th:text="${monthName}">Month Year</div>
+
+        <div class="card">
+          <table class="tx-table">
+            <thead>
+              <tr>
+                <th>Description</th>
+                <th>Date</th>
+                <th>Type</th>
+                <th class="text-right">Amount</th>
+              </tr>
+            </thead>
+
+            <tbody>
+              <tr th:if="${#lists.isEmpty(transactions)}">
+                <td colspan="4" class="empty-row">
+                  No transactions this month.
+                </td>
+              </tr>
+
+              <tr th:each="t : ${transactions}">
+                <td>
+                  <span th:text="${t.description}">Description</span>
+                  <span class="text-muted mobile-only" th:text="${t.date}"
+                    >Date</span
+                  >
+                </td>
+
+                <td class="text-muted desktop-only" th:text="${t.date}">
+                  Date
+                </td>
+
+                <td>
+                  <span
+                    class="tx-badge"
+                    th:classappend="${t.type == 'INCOME'} ? ' badge-in' : ' badge-ex'"
+                    th:text="${t.type}"
+                  >
+                    TYPE
+                  </span>
+                </td>
+
+                <td
+                  class="text-right"
+                  th:classappend="${t.type == 'INCOME'} ? ' income' : ' expense'"
+                  th:text="${(t.type == 'INCOME' ? '+' : '-') + '$' + #numbers.formatDecimal(t.amount, 1, 'COMMA', 2, 'POINT')}"
+                >
+                  $0.00
+                </td>
+
+                <td>
+                  <div class="tx-actions">
+                    <a
+                      th:href="@{/transactions/edit/{id}(id=${t.id}, redirect=${'/summary/details?month=' + month + '&year=' + year})}"
+                      >Edit</a
+                    >
+                    <form
+                      method="post"
+                      th:action="@{/transactions/delete/{id}(id=${t.id})}"
+                    >
+                      <input
+                        type="hidden"
+                        name="redirect"
+                        th:value="${'/summary/details?month=' + month + '&year=' + year}"
+                      />
+                      <button
+                        type="submit"
+                        onclick="return confirm('Delete this transaction?');"
+                      >
+                        Delete
+                      </button>
+                    </form>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

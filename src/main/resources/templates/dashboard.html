@@ -1,0 +1,252 @@
+<!doctype html>
+<html lang="en" xmlns:th="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Dashboard — FinTrack</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}" />
+  </head>
+
+  <body class="app-body">
+    <div class="shell">
+      <nav class="topnav">
+        <div class="nav-brand">
+          <img
+            th:src="@{/images/logo.png}"
+            alt="FinTrack logo"
+            class="nav-logo"
+          />
+          <span class="nav-brand-name">FinTrack</span>
+        </div>
+
+        <div class="nav-links">
+          <a th:href="@{/dashboard}" class="nav-link active">Dashboard</a>
+          <a th:href="@{/transactions}" class="nav-link">Transactions</a>
+          <a th:href="@{/summary}" class="nav-link">Summary</a>
+        </div>
+
+        <div class="nav-user">
+          <div
+            class="nav-avatar"
+            th:text="${#authentication.name.substring(0,1).toUpperCase()}"
+          >
+            U
+          </div>
+          <span class="nav-username" th:text="${#authentication.name}"
+            >username</span
+          >
+          <form method="post" th:action="@{/logout}">
+            <button type="submit" class="nav-logout">Sign out</button>
+          </form>
+        </div>
+      </nav>
+
+      <div class="content">
+        <div class="page-title" th:text="${'Welcome back, ' + username}">
+          Welcome back
+        </div>
+
+        <form
+          th:if="${#authentication.name == 'demo'}"
+          method="post"
+          th:action="@{/demo/reset}"
+          style="margin-bottom: 16px"
+        >
+          <button type="submit" class="btn-primary">Reset demo data</button>
+        </form>
+
+        <div class="stat-row">
+          <div class="stat-card">
+            <img
+              th:src="@{/images/balance.png}"
+              alt="balance logo"
+              class="nav-logo stat-icon"
+            />
+            <p class="stat-label">Current balance</p>
+            <p
+              class="stat-value"
+              th:text="${'$' + #numbers.formatDecimal(balance, 1, 'COMMA', 2, 'POINT')}"
+            >
+              $0.00
+            </p>
+          </div>
+
+          <div class="stat-card">
+            <img
+              th:src="@{/images/increase.png}"
+              alt="increase logo"
+              class="nav-logo stat-icon"
+            />
+            <p class="stat-label">Total income</p>
+            <p
+              class="stat-value income"
+              th:text="${'+$' + #numbers.formatDecimal(totalIncome, 1, 'COMMA', 2, 'POINT')}"
+            >
+              +$0.00
+            </p>
+          </div>
+
+          <div class="stat-card">
+            <img
+              th:src="@{/images/decrease.png}"
+              alt="decrease logo"
+              class="nav-logo stat-icon"
+            />
+            <p class="stat-label">Total expenses</p>
+            <p
+              class="stat-value expense"
+              th:text="${'-$' + #numbers.formatDecimal(totalExpense, 1, 'COMMA', 2, 'POINT')}"
+            >
+              -$0.00
+            </p>
+          </div>
+        </div>
+
+        <div class="card">
+          <p class="card-title">Monthly income vs expenses</p>
+          <div style="position: relative; width: 100%; height: 250px">
+            <canvas id="monthlyChart"></canvas>
+          </div>
+        </div>
+
+        <p class="card-sub">Recent activity</p>
+
+        <div class="tx-list">
+          <div th:if="${#lists.isEmpty(transactions)}" class="empty-row">
+            No transactions yet
+          </div>
+
+          <div
+            class="tx-item"
+            th:each="t, iterStat : ${transactions}"
+            th:if="${iterStat.index < 5}"
+            th:classappend="${t.type == 'INCOME'} ? ' tx-income' : ' tx-expense'"
+          >
+            <div class="tx-left">
+              <p class="tx-title" th:text="${t.description}">Description</p>
+              <p class="tx-date" th:text="${t.date}">2026-03-15</p>
+            </div>
+
+            <div class="tx-right">
+              <span
+                class="tx-badge"
+                th:text="${t.type}"
+                th:classappend="${t.type == 'INCOME'} ? ' badge-in' : ' badge-ex'"
+                >TYPE
+              </span>
+
+              <span
+                class="tx-amount"
+                th:classappend="${t.type == 'INCOME'} ? ' income' : ' expense'"
+                th:text="${(t.type == 'INCOME' ? '+' : '-') +
+                             '$' + #numbers.formatDecimal(t.amount, 1, 'COMMA', 2, 'POINT')}"
+                >$0.00
+              </span>
+            </div>
+
+            <div class="tx-actions">
+              <a
+                th:href="@{/transactions/edit/{id}(id=${t.id}, redirect='/dashboard')}"
+                >Edit</a
+              >
+              <form
+                method="post"
+                th:action="@{/transactions/delete/{id}(id=${t.id})}"
+              >
+                <input type="hidden" name="redirect" value="/dashboard" />
+                <button
+                  type="submit"
+                  onclick="return confirm('Delete this transaction?');"
+                >
+                  Delete
+                </button>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+
+    <script th:inline="javascript">
+      const summaries = [[${summaries}]];
+
+      const monthNames = [
+          'January','February','March','April','May','June',
+          'July','August','September','October','November','December'
+      ];
+
+      const labels  = summaries.map(s => monthNames[s.month - 1]);
+      const incomes  = summaries.map(s => s.totalIncome);
+      const expenses = summaries.map(s => s.totalExpense);
+
+      const ctx = document.getElementById('monthlyChart').getContext('2d');
+
+      new Chart(ctx, {
+          type: 'bar',
+          data: {
+              labels: labels,
+              datasets: [
+                  {
+                      label: 'Income',
+                      data: incomes,
+                      backgroundColor: '#dcfce7',
+                      borderColor: '#16a34a',
+                      borderWidth: 1,
+                      borderRadius: 4,
+                      barPercentage: 0.5,
+                      categoryPercentage: 0.6
+                  },
+                  {
+                      label: 'Expenses',
+                      data: expenses,
+                      backgroundColor: '#fee2e2',
+                      borderColor: '#dc2626',
+                      borderWidth: 1,
+                      borderRadius: 4,
+                      barPercentage: 0.5,
+                      categoryPercentage: 0.6
+                  }
+              ]
+          },
+          options: {
+              responsive: true,
+              maintainAspectRatio: false,
+              plugins: {
+                  legend: {
+                      position: 'bottom',
+                      labels: {
+                          font: { size: 12 },
+                          boxWidth: 12,
+                          padding: 16
+                      }
+                  },
+                  tooltip: {
+                      callbacks: {
+                          label: function(context) {
+                              return context.dataset.label + ': $' +
+                                     context.parsed.y.toFixed(2);
+                          }
+                      }
+                  }
+              },
+              scales: {
+                  x: {
+                      grid: { display: false }
+                  },
+                  y: {
+                      beginAtZero: true,
+                      ticks: {
+                      stepSize: 1000,
+                          callback: function(value) {
+                              return '$' + value.toLocaleString();
+                          }
+                      }
+                  }
+              }
+          }
+      });
+    </script>
+  </body>
+</html>

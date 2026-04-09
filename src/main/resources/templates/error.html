@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en" xmlns:th="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Error — FinTrack</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}" />
+  </head>
+
+  <body class="auth-body">
+    <div class="auth-wrap">
+      <div class="auth-card">
+        <div class="auth-logo">
+          <span class="auth-logo-name">Something went wrong</span>
+        </div>
+
+        <div class="alert alert-error" th:if="${status}">
+          <span th:text="${status}"></span> — <span th:text="${error}"></span>
+        </div>
+
+        <p class="auth-sub" th:text="${message}">
+          An unexpected error occurred.
+        </p>
+
+        <a
+          href="/dashboard"
+          class="btn-primary btn-full"
+          style="display: block; text-align: center"
+        >
+          Go back home
+        </a>
+      </div>
+    </div>
+  </body>
+</html>
